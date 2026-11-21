@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal Key Store - Subscriptions</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        body {
+            margin: 0; padding: 0; height: 100vh;
+            background: linear-gradient(135deg, #1a0033 0%, #0d1b2a 50%, #1a0033 100%);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Фон с плавающими шарами */
+        .bubbles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.6;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+
+        .bubble:nth-child(1) { width: 400px; height: 400px; background: #8a2be2; top: 10%; left: 10%; animation-duration: 12s; }
+        .bubble:nth-child(2) { width: 350px; height: 350px; background: #00ffff; bottom: 15%; right: 10%; animation-duration: 15s; animation-delay: -2s; }
+        .bubble:nth-child(3) { width: 300px; height: 300px; background: #ff00ff; top: 50%; left: 40%; animation-duration: 18s; animation-delay: -5s; }
+        .bubble:nth-child(4) { width: 450px; height: 450px; background: #0000ff; top: 5%; right: 30%; animation-duration: 20s; animation-delay: -8s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* Главный контейнер */
+        .generator-box {
+            background: rgba(15, 15, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px 35px;
+            width: 90%;
+            max-width: 900px; /* Сделал чуть шире для новых кнопок */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(138, 43, 226, 0.1);
+            z-index: 10;
+            position: relative;
+            backdrop-filter: blur(15px); 
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-top: 0;
+            font-size: 24px;
+            font-weight: 900;
+            text-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00ffff;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        /* Сетка моделей */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* Сделал 7 колонок для компактности */
+            gap: 6px;
+            margin-bottom: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .model-grid::-webkit-scrollbar { width: 4px; }
+        .model-grid::-webkit-scrollbar-thumb { background: #8a2be2; border-radius: 2px; }
+
+        .model-btn {
+            padding: 8px 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .model-btn:hover {
+            background: rgba(138, 43, 226, 0.2);
+            border-color: #8a2be2;
+            color: #fff;
+        }
+
+        .model-btn.active {
+            background: linear-gradient(135deg, #8a2be2, #00ffff);
+            border-color: transparent;
+            color: #000;
+            font-weight: 900;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Поле вывода ключа */
+        .key-display {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #00ffff;
+            text-align: center;
+            letter-spacing: 1px;
+            min-height: 30px;
+            word-break: break-all;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .key-display:hover {
+            background: rgba(0, 0, 0, 0.8);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        /* Кнопка генерации */
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #8a2be2, #00ffff);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 900;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .generate-btn:active { transform: scale(0.98); }
+
+        .generate-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Аккуратный дисклеймер */
+        .disclaimer-box {
+            position: absolute;
+            bottom: 15px;
+            width: 100%;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+            z-index: 10;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            .model-grid { grid-template-columns: repeat(4, 1fr); }
+            .generator-box { padding: 15px; }
+            .key-display { font-size: 14px; }
+        }
+        @media (max-width: 480px) {
+            .model-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Фон с шарами -->
+    <div class="bubbles">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <div class="generator-box">
+        <h1>Universal Key Store</h1>
+        <div class="subtitle">SUBSCRIPTIONS & KEYS</div>
+
+        <div class="model-grid">
+            <!-- Нейросети -->
+            <button class="model-btn active" onclick="selectModel('GPT', this)">ChatGPT</button>
+            <button class="model-btn" onclick="selectModel('CLAUDE', this)">Claude</button>
+            <button class="model-btn" onclick="selectModel('GEMINI', this)">Gemini</button>
+            <button class="model-btn" onclick="selectModel('DEEPSEEK', this)">DeepSeek</button>
+            <button class="model-btn" onclick="selectModel('GROK', this)">Grok</button>
+            <button class="model-btn" onclick="selectModel('QWEN', this)">Qwen</button>
+            <button class="model-btn" onclick="selectModel('ALICE', this)">Алиса AI</button>
+            <button class="model-btn" onclick="selectModel('GIGA', this)">GigaChat</button>
+            <button class="model-btn" onclick="selectModel('MIDJOURNEY', this)">Midjourney</button>
+            <button class="model-btn" onclick="selectModel('SORA', this)">Sora</button>
+            <button class="model-btn" onclick="selectModel('LLAMA', this)">Llama 3</button>
+            <button class="model-btn" onclick="selectModel('COPILOT', this)">Copilot</button>
+            <button class="model-btn" onclick="selectModel('PERPLEXITY', this)">Perplexity</button>
+            
+            <!-- Игровые платформы и подписки -->
+            <button class="model-btn" onclick="selectModel('STEAM', this)">Steam</button>
+            <button class="model-btn" onclick="selectModel('ROBLOX', this)">Roblox</button>
+            <button class="model-btn" onclick="selectModel('MINECRAFT', this)">Minecraft</button>
+            <button class="model-btn" onclick="selectModel('DISCORD', this)">Discord</button>
+            <button class="model-btn" onclick="selectModel('TELEGRAM', this)">Telegram</button>
+            <button class="model-btn" onclick="selectModel('WINDOWS', this)">Windows</button>
+            <button class="model-btn" onclick="selectModel('GOOGLEPLAY', this)">Google Play</button>
+            <button class="model-btn" onclick="selectModel('APPLE', this)">Apple / iTunes</button>
+            <button class="model-btn" onclick="selectModel('PLAYSTATION', this)">PlayStation</button>
+            <button class="model-btn" onclick="selectModel('XBOX', this)">Xbox</button>
+            <button class="model-btn" onclick="selectModel('GTA6', this)">GTA VI</button>
+            <button class="model-btn" onclick="selectModel('EPIC', this)">Epic Games</button>
+            <button class="model-btn" onclick="selectModel('EA', this)">EA App</button>
+            <button class="model-btn" onclick="selectModel('NINTENDO', this)">Nintendo</button>
+            
+            <!-- Подписки и сервисы -->
+            <button class="model-btn" onclick="selectModel('NETFLIX', this)">Netflix</button>
+            <button class="model-btn" onclick="selectModel('SPOTIFY', this)">Spotify</button>
+            <button class="model-btn" onclick="selectModel('YOUTUBE', this)">YouTube</button>
+            <button class="model-btn" onclick="selectModel('XBOXGP', this)">Xbox Game Pass</button>
+            <button class="model-btn" onclick="selectModel('DISNEY', this)">Disney+</button>
+            <button class="model-btn" onclick="selectModel('TWITCH', this)">Twitch</button>
+            <button class="model-btn" onclick="selectModel('ADOBE', this)">Adobe CC</button>
+            <button class="model-btn" onclick="selectModel('CANVA', this)">Canva Pro</button>
+            <button class="model-btn" onclick="selectModel('DUOLINGO', this)">Duolingo</button>
+            
+            <!-- Полезная хуйня -->
+            <button class="model-btn" onclick="selectModel('GITHUB', this)">GitHub Copilot</button>
+            <button class="model-btn" onclick="selectModel('FIGMA', this)">Figma Pro</button>
+        </div>
+
+        <div class="key-display" id="key-output" onclick="copyToClipboard()">Выбери сервис и нажми "Купить ключ"...</div>
+
+        <button class="generate-btn" id="gen-btn" onclick="generateKey()">Сгенерировать*</button>
+    </div>
+
+    <!-- Тот самый аккуратный дисклеймер -->
+    <div class="disclaimer-box" id="legal-disclaimer" data-type="legal">
+        * Все сгенерированные ключи являются вымышленными. Сайт создан в развлекательных целях и не является магазином реальных доступов.
+    </div>
+
+    <script>
+        let currentModel = 'GPT';
+        let isGenerating = false;
+        const keyOutput = document.getElementById('key-output');
+        const genBtn = document.getElementById('gen-btn');
+
+        function selectModel(model, btn) {
+            if (isGenerating) return;
+            currentModel = model;
+            document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            keyOutput.innerText = "Нажми 'Купить ключ'...";
+        }
+
+        function getRandomChars(length, charset) {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            return result;
+        }
+
+        function generateKey() {
+            if (isGenerating) return;
+            isGenerating = true;
+            genBtn.disabled = true;
+            genBtn.innerText = "ПОИСК...";
+            keyOutput.innerText = ""; 
+
+            let fullKey = "";
+            const alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const upperNum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const digits = "0123456789";
+            const hex = "0123456789abcdef";
+            const base64url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+            switch(currentModel) {
+                // --- НЕЙРОСЕТИ ---
+                case 'GPT': fullKey = "sk-" + getRandomChars(48, alphanum); break;
+                case 'CLAUDE': fullKey = "sk-ant-api03-" + getRandomChars(95, base64url); break;
+                case 'GEMINI': fullKey = "AIzaSy" + getRandomChars(33, alphanum); break;
+                case 'DEEPSEEK': fullKey = "sk-" + getRandomChars(32, alphanum); break;
+                case 'GROK': fullKey = "xai-" + getRandomChars(80, alphanum); break;
+                case 'QWEN': fullKey = "sk-" + getRandomChars(32, alphanum); break;
+                case 'ALICE': fullKey = "AQVN" + getRandomChars(32, alphanum); break;
+                case 'GIGA': {
+                    const uuid = () => `${getRandomChars(8, hex)}-${getRandomChars(4, hex)}-${getRandomChars(4, hex)}-${getRandomChars(4, hex)}-${getRandomChars(12, hex)}`;
+                    fullKey = btoa(uuid() + ":" + uuid());
+                    break;
+                }
+                case 'MIDJOURNEY': fullKey = "mj-" + getRandomChars(40, alphanum) + "." + getRandomChars(10, alphanum); break;
+                case 'SORA': fullKey = "sk-vid-" + getRandomChars(50, alphanum); break;
+                case 'LLAMA': fullKey = "meta-llama-" + getRandomChars(36, alphanum); break;
+                case 'COPILOT': fullKey = "ms-copilot-" + getRandomChars(32, alphanum); break;
+                case 'PERPLEXITY': fullKey = "pplx-" + getRandomChars(48, alphanum); break;
+                
+                // --- ИГРЫ И СЕРВИСЫ ---
+                case 'STEAM': fullKey = `${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}`; break;
+                case 'ROBLOX': fullKey = "RBX-" + getRandomChars(12, upperNum); break;
+                case 'MINECRAFT': fullKey = `${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}`; break;
+                case 'DISCORD': fullKey = "MTA" + getRandomChars(24, alphanum) + ".Gh" + getRandomChars(6, alphanum) + "." + getRandomChars(28, alphanum); break;
+                case 'TELEGRAM': fullKey = `api_id: ${getRandomChars(8, digits)} | api_hash: ${getRandomChars(32, alphanum)}`; break;
+                case 'WINDOWS': fullKey = `${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}`; break;
+                case 'GOOGLEPLAY': fullKey = `${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}`; break;
+                case 'APPLE': fullKey = "X" + getRandomChars(15, upperNum); break;
+                case 'PLAYSTATION': case 'GTA6': fullKey = `${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}`; break;
+                case 'XBOX': fullKey = `${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}`; break;
+                case 'EPIC': fullKey = getRandomChars(20, upperNum); break;
+                case 'EA': fullKey = `${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}-${getRandomChars(4, upperNum)}`; break;
+                case 'NINTENDO': fullKey = getRandomChars(16, digits); break;
+                
+                // --- ПОДПИСКИ ---
+                case 'NETFLIX': fullKey = getRandomChars(14, digits); break;
+                case 'SPOTIFY': fullKey = "sp-" + getRandomChars(12, upperNum); break;
+                case 'YOUTUBE': fullKey = "yt-" + getRandomChars(12, upperNum); break;
+                case 'XBOXGP': fullKey = `${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}-${getRandomChars(5, upperNum)}`; break;
+                case 'DISNEY': fullKey = "dsn-" + getRandomChars(16, upperNum); break;
+                case 'TWITCH': fullKey = "tw-" + getRandomChars(24, alphanum); break;
+                case 'ADOBE': fullKey = "ado-" + getRandomChars(32, alphanum); break;
+                case 'CANVA': fullKey = "cnv-" + getRandomChars(24, alphanum); break;
+                case 'DUOLINGO': fullKey = "duo-" + getRandomChars(16, upperNum); break;
+
+                // --- ПОЛЕЗНОЕ ---
+                case 'GITHUB': fullKey = "gh-copilot-" + getRandomChars(32, alphanum); break;
+                case 'FIGMA': fullKey = "figma-pro-" + getRandomChars(32, alphanum); break;
+                
+                default: fullKey = "UNKNOWN-KEY-FORMAT";
+            }
+
+            let i = 0;
+            const typeInterval = setInterval(() => {
+                keyOutput.innerText += fullKey.charAt(i);
+                i++;
+                if (i >= fullKey.length) {
+                    clearInterval(typeInterval);
+                    setTimeout(() => {
+                        isGenerating = false;
+                        genBtn.disabled = false;
+                        genBtn.innerText = "Купить ещё";
+                    }, 500);
+                }
+            }, 10); 
+        }
+
+        function copyToClipboard() {
+            const text = keyOutput.innerText;
+            if (text === 'Выбери сервис и нажми "Купить ключ"...' || text === '' || isGenerating) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalColor = keyOutput.style.color;
+                keyOutput.style.color = '#fff';
+                setTimeout(() => keyOutput.style.color = originalColor, 200);
+            }).catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
